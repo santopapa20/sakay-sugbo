@@ -361,14 +361,28 @@ function findOneTransfer(
   return [...bestPerPair.values()];
 }
 
+/** The jeepney codes of an option in riding order, e.g. "04L>13C". */
+function codeSequence(option: TripOption): string {
+  return option.legs
+    .filter((leg): leg is RideLeg => leg.kind === 'ride')
+    .map((leg) => leg.direction.code)
+    .join('>');
+}
+
+/**
+ * Drops trips with a change that use a route which already goes all the way.
+ * If 04B takes you there directly, "06B then 04B" only adds a change.
+ */
+function withoutPointlessTransfers(direct: TripOption[], transfer: TripOption[]): TripOption[] {
+  const directCodes = new Set(direct.map(codeSequence));
+  return transfer.filter((option) => !codeSequence(option).split('>').some((code) => directCodes.has(code)));
+}
+
 /** Keeps the cheapest option for each sequence of jeepney codes. */
 function bestPerCodeSequence(options: TripOption[]): TripOption[] {
   const best = new Map<string, TripOption>();
   for (const option of options) {
-    const key = option.legs
-      .filter((leg): leg is RideLeg => leg.kind === 'ride')
-      .map((leg) => leg.direction.code)
-      .join('>');
+    const key = codeSequence(option);
     const known = best.get(key);
     if (!known || option.cost < known.cost) best.set(key, option);
   }
@@ -406,8 +420,15 @@ export function findTrips(network: TripNetwork, origin: LngLat, destination: Lng
     );
   });
 
-  const options = bestPerCodeSequence([...direct, ...transfer])
-    .sort((a, b) => a.transfers - b.transfers || a.cost - b.cost)
+  const options = bestPerCodeSequence([...direct, ...withoutPointlessTransfers(direct, transfer)])
+    // Fewest changes, then cheapest. Equal costs are ordered by code so the
+    // answer is always the same, here and in the Java version of this file.
+    .sort(
+      (a, b) =>
+        a.transfers - b.transfers ||
+        Math.round(a.cost) - Math.round(b.cost) ||
+        (codeSequence(a) < codeSequence(b) ? -1 : 1),
+    )
     .slice(0, MAX_OPTIONS);
 
   return { options, reason: options.length ? null : 'no-connection', straightLineM };

@@ -1,15 +1,20 @@
 /**
  * The one place the app gets its transit data from.
  *
- * Components never call `fetch` themselves; they ask this service. Today the
- * data comes from static GeoJSON files in public/data/. When the Spring Boot
- * backend exists, only this file changes: a second implementation of
- * TransitDataService that calls /api/routes and /api/places (see
- * backend/README.md for the planned endpoints).
+ * Components never call `fetch` themselves; they ask this service. There are
+ * two interchangeable sources, chosen by the VITE_DATA_SOURCE setting:
+ *
+ *   static (default)  GeoJSON files in public/data/. Needs no server, so the
+ *                     app can be hosted anywhere, even on GitHub Pages.
+ *   api               The Spring Boot backend (see backend/README.md).
+ *                     Start the frontend with `npm run dev:api`.
+ *
+ * Both return exactly the same shapes, so nothing else in the app knows or
+ * cares which one is in use.
  */
 import type { FeatureCollection, LineString, Point } from 'geojson';
 import { flagAmbiguousTerminals } from '../features/routes/routeModel';
-import type { DataMeta, Place, RouteDirection } from '../types';
+import type { Coordinate, DataMeta, Place, RouteDirection } from '../types';
 import { cumulativeMetres } from '../utils/geo';
 
 export interface TransitDataService {
@@ -18,7 +23,10 @@ export interface TransitDataService {
   getMeta(): Promise<DataMeta>;
 }
 
-async function getJson<T>(url: string): Promise<T> {
+/** True when the app should talk to the Spring Boot backend. */
+export const USE_API = import.meta.env.VITE_DATA_SOURCE === 'api';
+
+export async function getJson<T>(url: string): Promise<T> {
   const response = await fetch(url);
   if (!response.ok) {
     throw new Error(`Could not load ${url} (HTTP ${response.status})`);
@@ -26,8 +34,17 @@ async function getJson<T>(url: string): Promise<T> {
   return (await response.json()) as T;
 }
 
-type RouteProperties = Omit<RouteDirection, 'coordinates' | 'cumulativeM'>;
+/** A route as it arrives, before the two values we work out ourselves are added. */
+type RawRoute = Omit<RouteDirection, 'cumulativeM' | 'terminalsAmbiguous'>;
+type RouteProperties = Omit<RawRoute, 'coordinates'>;
 type PlaceProperties = Omit<Place, 'lng' | 'lat'>;
+
+/** Adds the running distance along each line, and flags clashing terminal names. */
+function prepareRoutes(routes: RawRoute[]): RouteDirection[] {
+  return flagAmbiguousTerminals(
+    routes.map((route) => ({ ...route, cumulativeM: cumulativeMetres(route.coordinates) })),
+  );
+}
 
 /** Reads the GeoJSON files that tools/osm-import/import.mjs writes. */
 class StaticFileDataService implements TransitDataService {
@@ -35,15 +52,12 @@ class StaticFileDataService implements TransitDataService {
     const collection = await getJson<FeatureCollection<LineString, RouteProperties>>(
       '/data/routes.geojson',
     );
-    const routes = collection.features.map((feature) => {
-      const coordinates = feature.geometry.coordinates as [number, number][];
-      return {
+    return prepareRoutes(
+      collection.features.map((feature) => ({
         ...feature.properties,
-        coordinates,
-        cumulativeM: cumulativeMetres(coordinates),
-      };
-    });
-    return flagAmbiguousTerminals(routes);
+        coordinates: feature.geometry.coordinates as Coordinate[],
+      })),
+    );
   }
 
   async getPlaces(): Promise<Place[]> {
@@ -62,4 +76,21 @@ class StaticFileDataService implements TransitDataService {
   }
 }
 
-export const dataService: TransitDataService = new StaticFileDataService();
+/** Asks the Spring Boot backend. Its JSON already has the shapes the app uses. */
+class ApiDataService implements TransitDataService {
+  async getRoutes(): Promise<RouteDirection[]> {
+    return prepareRoutes(await getJson<RawRoute[]>('/api/routes'));
+  }
+
+  getPlaces(): Promise<Place[]> {
+    return getJson<Place[]>('/api/places');
+  }
+
+  getMeta(): Promise<DataMeta> {
+    return getJson<DataMeta>('/api/meta');
+  }
+}
+
+export const dataService: TransitDataService = USE_API
+  ? new ApiDataService()
+  : new StaticFileDataService();

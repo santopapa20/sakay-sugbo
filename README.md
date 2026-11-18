@@ -49,7 +49,8 @@ Other commands (run inside `frontend/`):
 
 | Command | What it does |
 |---|---|
-| `npm test` | Runs the 63 unit tests (distance maths, search, trip finder, favourites, wording). |
+| `npm test` | Runs the 64 unit tests (distance maths, search, trip finder, favourites, wording). |
+| `npm run dev:api` | Same app, but taking its data and trips from the Spring Boot backend (see below). |
 | `npm run typecheck` | Checks the TypeScript types without building. |
 | `npm run build` | Type-checks, then builds the production site into `frontend/dist/`. |
 | `npm run preview` | Serves the production build locally to check it. |
@@ -72,7 +73,7 @@ node tools/osm-import/import.mjs --refresh
 | Motion | Motion (formerly Framer Motion) | Panel and toast transitions; respects "reduce motion". |
 | Icons | Lucide | Consistent line icons. |
 | Tests | Vitest | Runs the unit tests in under a second. |
-| Backend | *Planned:* Java + Spring Boot | See below. |
+| Backend | Java 21, Spring Boot 4, Spring Data JPA, H2 / MySQL | REST API; the trip finder also runs on the server. See below. |
 
 ### Folder map
 
@@ -98,7 +99,7 @@ sakay-sugbo/
 │       ├── components/       reusable pieces: buttons, badge, sheet, dialog, toasts
 │       └── styles/           design tokens and base styles
 ├── tools/osm-import/         script that turns OpenStreetMap data into the app's files
-├── backend/                  plan and API contract for the Spring Boot service
+├── backend/                  the Spring Boot API (Java): routes, places, trips
 └── docs/                     DATA.md (the data) and DESIGN.md (the design decisions)
 ```
 
@@ -123,23 +124,46 @@ The logic that matters most is plain TypeScript with no React in it, so it is ea
 If the mapped routes do not connect two points, the app says *"No ride could be confirmed"*.
 It never invents one.
 
-## The backend (next step)
+## The backend
 
-The original plan puts the data and the trip finder behind a **Java + Spring Boot** REST API
-with a real database. That part is **not built yet**, because Java was not installed on the
-machine this was developed on, and unverifiable code is worse than none.
+A **Java 21 + Spring Boot 4** REST API in [`backend/`](backend/README.md). It stores the
+routes in a database, answers "which routes pass near this point?", and finds trips using
+the same rules as the browser, ported to Java.
 
-The frontend is ready for it: all data access goes through
+The app can run in two ways, and looks identical in both:
+
+| Mode | Start with | Where data and trips come from |
+|---|---|---|
+| **Static** (default) | `npm run dev` | GeoJSON files and the browser. No server, so it can be hosted anywhere, including GitHub Pages. |
+| **API** | backend running, then `npm run dev:api` | The Spring Boot API on port 8080. |
+
+To run the backend you need a JDK (21 recommended). From the `backend` folder:
+
+```bash
+.\mvnw.cmd spring-boot:run
+```
+
+Only two files know which mode is in use:
 [`services/dataService.ts`](frontend/src/services/dataService.ts) and
-[`services/tripService.ts`](frontend/src/services/tripService.ts). When the API exists,
-those two files change and nothing else does. The planned endpoints, tables and setup
-steps are in [backend/README.md](backend/README.md).
+[`services/tripService.ts`](frontend/src/services/tripService.ts). Endpoints, tables and
+design notes are in [backend/README.md](backend/README.md).
+
+The database is **H2 in memory** by default (nothing to install). A **MySQL** profile is
+written but has not been run, because MySQL is not installed on the development machine.
 
 ## What has been checked, and what has not
 
 Checked by running it (18 November 2026):
 
-- `npm test`: 63 tests pass. `npm run typecheck` and `npm run build`: no errors.
+- Frontend: `npm test`, 64 tests pass. `npm run typecheck` and `npm run build`: no errors.
+- Backend: `mvnw test`, 35 tests pass, including 9 that start the whole application, import
+  the real data and call every endpoint.
+- Backend started for real and called with `curl`: 74 routes returned, 20 route directions
+  within 300 m of Fuente Osmeña, `400` for impossible coordinates, trips returned.
+- The Java and TypeScript trip finders compared on 300 pairs of real places: same options
+  for all 300.
+- The app in API mode in a browser: routes, places and a trip with one change all came
+  from the backend, with no errors in the console.
 - In a browser, development and production builds: the map loads with 3D buildings; tapping
   the map lists nearby routes; search finds places and route codes; a route opens, draws
   and lists its stops; a trip with one change is found and drawn; category chips show
@@ -150,13 +174,14 @@ Checked by running it (18 November 2026):
 Not checked:
 
 - **The routes themselves.** They are as mapped in OpenStreetMap; none was ridden.
+- **MySQL.** The profile is written but was never run.
 - Location when permission is **granted** (the test browser always denies it).
 - Real phones, Safari, Firefox, screen readers, and slow networks.
 - Automated accessibility and performance measurements.
 
 ## Not done yet
 
-- The Spring Boot backend and database (see above).
+- Running the backend on MySQL (or PostgreSQL) instead of the in-memory database.
 - Trips needing two changes.
 - Fares and travel times (waiting for a verified source).
 - Nine route codes that are mapped too roughly in OpenStreetMap to use (listed in

@@ -3,7 +3,7 @@
   "licence": "Open Database Licence (ODbL) 1.0",
   "licenceUrl": "https://www.openstreetmap.org/copyright",
   "osmDataTimestamp": "2026-11-18T07:36:04Z",
-  "importedAt": "2026-11-18T08:02:22.583Z",
+  "importedAt": "2026-11-18T08:18:30.098Z",
   "boundingBox": {
     "south": 10.24,
     "west": 123.82,
@@ -16,7 +16,7 @@
     "routeDirections": 74,
     "routeCodes": 37,
     "places": 1142,
-    "streets": 1892
+    "streets": 1888
   },
   "skippedRoutes": [
     {

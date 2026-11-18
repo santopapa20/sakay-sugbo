@@ -117,16 +117,23 @@ const pinLabel = ({ lng, lat }: LngLat) => `Pinned point (${lat.toFixed(4)}, ${l
 export const useAppStore = create<AppState>((set, get) => {
   /** Runs the trip search whenever both ends are known. */
   const refreshTrip = async () => {
-    const { tripOrigin, tripDestination, tripNetwork } = get();
+    const { tripOrigin, tripDestination, tripNetwork, routeById } = get();
     const request = ++tripRequest;
     if (!tripOrigin || !tripDestination || !tripNetwork) {
       set({ tripStatus: 'idle', tripResult: null, tripSelected: 0 });
       return;
     }
     set({ tripStatus: 'searching' });
-    const result = await planTrip(tripNetwork, tripOrigin, tripDestination);
-    if (request !== tripRequest) return; // the user has already changed the question
-    set({ tripStatus: 'done', tripResult: result, tripSelected: 0, sheet: 'half' });
+    try {
+      const result = await planTrip(tripOrigin, tripDestination, { network: tripNetwork, routeById });
+      if (request !== tripRequest) return; // the user has already changed the question
+      set({ tripStatus: 'done', tripResult: result, tripSelected: 0, sheet: 'half' });
+    } catch {
+      if (request !== tripRequest) return;
+      // Only possible when the trip is worked out by the backend and it cannot be reached.
+      set({ tripStatus: 'idle', tripResult: null });
+      get().showToast('The trip search could not reach the server. Check that it is running, then try again.', 'warning');
+    }
   };
 
   const persistFavourites = (favourites: Favourites) => {

@@ -485,15 +485,19 @@ async function importStreets() {
   );
   // A street is many short ways. Keep one search entry per name: the piece
   // nearest the middle of all its pieces.
-  const byName = new Map();
+  // Grouped by a simplified form of the name, so that "Ilang-Ilang Street" and
+  // "Ilang-ilang Street" count as one street and every entry gets a unique id.
+  const slug = (name) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  const bySlug = new Map();
   for (const way of data.elements) {
     if (!way.center) continue;
-    const list = byName.get(way.tags.name) ?? [];
-    list.push({ lat: way.center.lat, lon: way.center.lon });
-    byName.set(way.tags.name, list);
+    const key = slug(way.tags.name);
+    const entry = bySlug.get(key) ?? { name: way.tags.name, pieces: [] };
+    entry.pieces.push({ lat: way.center.lat, lon: way.center.lon });
+    bySlug.set(key, entry);
   }
   const features = [];
-  for (const [name, pieces] of byName) {
+  for (const [key, { name, pieces }] of bySlug) {
     const middle = {
       lat: pieces.reduce((sum, p) => sum + p.lat, 0) / pieces.length,
       lon: pieces.reduce((sum, p) => sum + p.lon, 0) / pieces.length,
@@ -502,7 +506,7 @@ async function importStreets() {
     features.push({
       type: 'Feature',
       properties: {
-        id: `street-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
+        id: `street-${key}`,
         name,
         category: 'street',
         address: null,

@@ -78,6 +78,17 @@ describe('findTrips', () => {
     expect(options[1]!.transfers).toBe(1);
   });
 
+  it('does not suggest a change when one of the routes already goes direct', () => {
+    // FEED starts near the western end and meets EAST after 500 m. Without the
+    // rule, "FEED then EAST" would be offered next to the direct EAST ride.
+    const feed = makeTestRoute('FEED', [
+      [123.886, 10.304],
+      [123.89, 10.3003],
+    ]);
+    const { options } = findTrips(buildTripNetwork([EAST, feed]), WEST_END, EAST_END);
+    expect(options.map((o) => rides(o.legs).map((r) => r.direction.code).join('>'))).toEqual(['EAST']);
+  });
+
   it('never offers a transfer between two directions of the same code', () => {
     const northAgain = makeTestRoute('EAST', NORTH.coordinates, { id: 'EAST-variant' });
     const sameCode = buildTripNetwork([EAST, northAgain]);
