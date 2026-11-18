@@ -65,6 +65,8 @@ public class Route {
     @Column(nullable = false, length = 9)
     private String colour;
 
+    // Named explicitly: left alone, the column would be called "lengthm".
+    @Column(name = "length_m")
     private int lengthM;
 
     private long osmRelationId;
@@ -99,7 +101,7 @@ public class Route {
             @Column(length = 160) String name,
             double latitude,
             double longitude,
-            int alongM) {
+            @Column(name = "along_m") int alongM) {
     }
 
     /** "From point number {@code fromIndex} onwards the route runs on this street." */

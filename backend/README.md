@@ -4,7 +4,7 @@ A Spring Boot REST API that stores the jeepney routes in a database, answers
 "which routes pass near this point?", and finds trips with up to one change.
 
 Java 21, Spring Boot 4.1, Spring Data JPA. Database: H2 in memory by default,
-MySQL through a profile.
+MySQL 8 through a profile. Both are tested.
 
 ## Run it
 
@@ -106,21 +106,53 @@ time the server starts, which takes a few seconds. While the server runs you can
 look at the tables at <http://localhost:8080/h2-console> (JDBC URL
 `jdbc:h2:mem:sakaysugbo`, user `sa`, empty password).
 
-**MySQL: set up but NOT yet tested**, because MySQL was not installed on the
-development machine. After installing MySQL 8:
+**MySQL 8.4: tested.** All 35 tests pass on it, and the server was started on
+it twice to confirm that a restart keeps the data and does not import it again
+(74 routes, 21,103 points, 1,686 stops, 3,030 places).
 
-```bash
-.\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=mysql"
-```
+That test used a temporary MySQL server that was deleted afterwards. To run on
+MySQL yourself you need a server of your own. This is a one-time setup:
 
-Set the user name and password as environment variables first
-(`SAKAY_DB_USER`, `SAKAY_DB_PASSWORD`). They are read from the environment so
-that no password is ever written into a file that goes to GitHub. The settings
-are in `src/main/resources/application-mysql.properties`.
+1. **Create the server.** MySQL 8.4 is installed, but no server exists until you
+   run **MySQL 8.4 Configurator** from the Start menu. Keep the defaults (port
+   3306, run as a Windows service) and choose a root password. Only you should
+   know it, which is why this step was left to you.
+2. **Create a database and a user just for this app.** Open **MySQL 8.4 Command
+   Line Client**, sign in as root, and run this with a password of your choice:
+
+   ```sql
+   CREATE DATABASE sakay_sugbo;
+   CREATE USER 'sakay'@'localhost' IDENTIFIED BY 'choose-a-password';
+   GRANT ALL PRIVILEGES ON sakay_sugbo.* TO 'sakay'@'localhost';
+   ```
+
+   A separate user means the app can touch only its own database, never the
+   rest of the server. (This exact setup was part of the test.)
+3. **Tell the app the user name and password**, in the PowerShell window you
+   will start it from:
+
+   ```powershell
+   $env:SAKAY_DB_USER = "sakay"
+   $env:SAKAY_DB_PASSWORD = "the-password-you-chose"
+   ```
+
+4. **Start with the MySQL profile:**
+
+   ```bash
+   .\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=mysql"
+   ```
+
+The first start creates the tables and imports the data. Later starts find the
+data already there and skip the import.
+
+The password is read from an environment variable so that it is never written
+into a file that goes to GitHub. The settings are in
+`src/main/resources/application-mysql.properties`; `SAKAY_DB_URL` changes the
+address if your server is not on `localhost:3306`.
 
 ## Tests
 
-35 tests, all passing (run on 18 November 2026):
+35 tests, all passing on both H2 and MySQL 8.4 (run on 18 November 2026):
 
 | Test class | What it checks |
 |---|---|
@@ -135,8 +167,10 @@ gave the same options for all 300.
 
 ## Not done yet
 
-- MySQL has not been run (see above). PostgreSQL with PostGIS is a possible
-  alternative if the data ever grows beyond one city.
+- A permanent MySQL server on this machine: installed but not configured, because
+  the root password is yours to choose (see "Database" above).
+- PostgreSQL with PostGIS is a possible alternative if the data ever grows beyond
+  one city.
 - Place search still runs in the browser, over the list from `/api/places`.
 - No login, rate limiting or CORS settings: the frontend reaches the API through
   the Vite dev proxy. These are needed before putting the API on the internet.

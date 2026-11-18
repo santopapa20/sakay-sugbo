@@ -148,8 +148,8 @@ Only two files know which mode is in use:
 [`services/tripService.ts`](frontend/src/services/tripService.ts). Endpoints, tables and
 design notes are in [backend/README.md](backend/README.md).
 
-The database is **H2 in memory** by default (nothing to install). A **MySQL** profile is
-written but has not been run, because MySQL is not installed on the development machine.
+The database is **H2 in memory** by default (nothing to install). A **MySQL 8** profile is
+also there and tested; [backend/README.md](backend/README.md) has the four setup steps.
 
 ## What has been checked, and what has not
 
@@ -157,7 +157,9 @@ Checked by running it (18 November 2026):
 
 - Frontend: `npm test`, 64 tests pass. `npm run typecheck` and `npm run build`: no errors.
 - Backend: `mvnw test`, 35 tests pass, including 9 that start the whole application, import
-  the real data and call every endpoint.
+  the real data and call every endpoint. Run on both H2 and MySQL 8.4.
+- Backend on MySQL: started twice against a temporary MySQL server. The second start kept
+  the data and imported nothing again. Also run as a limited database user.
 - Backend started for real and called with `curl`: 74 routes returned, 20 route directions
   within 300 m of Fuente Osmeña, `400` for impossible coordinates, trips returned.
 - The Java and TypeScript trip finders compared on 300 pairs of real places: same options
@@ -174,14 +176,15 @@ Checked by running it (18 November 2026):
 Not checked:
 
 - **The routes themselves.** They are as mapped in OpenStreetMap; none was ridden.
-- **MySQL.** The profile is written but was never run.
+- **A permanent MySQL server.** MySQL was tested on a temporary server that was then
+  deleted. The lasting one needs a root password, which only the owner should choose.
 - Location when permission is **granted** (the test browser always denies it).
 - Real phones, Safari, Firefox, screen readers, and slow networks.
 - Automated accessibility and performance measurements.
 
 ## Not done yet
 
-- Running the backend on MySQL (or PostgreSQL) instead of the in-memory database.
+- Setting up the permanent MySQL server (four steps in [backend/README.md](backend/README.md)).
 - Trips needing two changes.
 - Fares and travel times (waiting for a verified source).
 - Nine route codes that are mapped too roughly in OpenStreetMap to use (listed in
