@@ -1,0 +1,246 @@
+@import 'tailwindcss';
+
+/*
+ * DESIGN TOKENS
+ * Every colour, font, radius and shadow in the app comes from here.
+ * Tailwind turns each one into utility classes: --color-night-800 becomes
+ * bg-night-800, text-night-800, border-night-800 and so on.
+ * The reasoning behind the choices is in docs/DESIGN.md.
+ */
+@theme {
+  /* Type: Barlow was drawn from Californian road and transit signs.
+     The condensed cut is used for route codes, like a jeepney signboard. */
+  --font-sans: 'Barlow', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Barlow Condensed', 'Barlow', ui-sans-serif, sans-serif;
+
+  /* Night: the dark map and the surfaces that float on it. */
+  --color-night-950: #070a0e;
+  --color-night-900: #0b0f14;
+  --color-night-800: #121820;
+  --color-night-700: #1a222c;
+  --color-night-600: #26313d;
+  --color-night-500: #3b4858;
+
+  /* Fog: text, from brightest to faintest. All pass WCAG AA on night-800. */
+  --color-fog-100: #f2f5f7;
+  --color-fog-300: #c6cfd7;
+  --color-fog-400: #9aa6b2;
+  --color-fog-500: #8490a0;
+
+  /* Accents. Mint is "do this"; cyan is "a place"; amber and coral are warnings. */
+  --color-mint-300: #9bf0d5;
+  --color-mint-400: #72e6c1;
+  --color-mint-600: #2fa884;
+  --color-cyan-400: #48bfd1;
+  --color-amber-400: #f2b55a;
+  --color-coral-400: #f28b82;
+
+  --radius-xs: 3px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+
+  --shadow-panel: 0 20px 50px -14px rgb(0 0 0 / 0.7), 0 2px 6px rgb(0 0 0 / 0.35);
+
+  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    margin: 0;
+    background: var(--color-night-900);
+    color: var(--color-fog-100);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior: none;
+  }
+
+  /* One clear focus ring everywhere, shown only for keyboard users. */
+  :focus-visible {
+    outline: 2px solid var(--color-mint-400);
+    outline-offset: 2px;
+  }
+
+  button {
+    cursor: pointer;
+  }
+
+  button:disabled {
+    cursor: not-allowed;
+  }
+
+  ::selection {
+    background: rgb(114 230 193 / 0.3);
+  }
+}
+
+@layer components {
+  /* A surface floating on the map: nearly opaque, so text never fights the map. */
+  .panel {
+    background: rgb(18 24 32 / 0.94);
+    border: 1px solid var(--color-night-600);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-panel);
+    backdrop-filter: blur(14px);
+  }
+
+  /* Small capital label above a section, set in the signboard face. */
+  .eyebrow {
+    font-family: var(--font-display);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-fog-500);
+  }
+
+  .scroll-area {
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-night-500) transparent;
+  }
+
+  .skeleton {
+    border-radius: var(--radius-sm);
+    background: linear-gradient(
+      90deg,
+      var(--color-night-700) 0%,
+      var(--color-night-600) 50%,
+      var(--color-night-700) 100%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-sweep 1.4s linear infinite;
+  }
+}
+
+@keyframes skeleton-sweep {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes location-pulse {
+  from {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  to {
+    transform: scale(3.2);
+    opacity: 0;
+  }
+}
+
+/* ---------- Labels and markers placed on the map (plain DOM, not React) ---------- */
+
+.map-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+}
+
+.map-label__card {
+  max-width: 220px;
+  padding: 6px 10px 7px;
+  border: 1px solid var(--color-night-500);
+  border-radius: var(--radius-sm);
+  background: rgb(11 15 20 / 0.94);
+  box-shadow: 0 8px 24px -8px rgb(0 0 0 / 0.8);
+  text-align: left;
+}
+
+.map-label__overline {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--label-accent, var(--color-mint-400));
+}
+
+.map-label__title {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--color-fog-100);
+}
+
+.map-label__stem {
+  width: 1px;
+  height: 22px;
+  background: linear-gradient(var(--color-night-500), var(--label-accent, var(--color-mint-400)));
+}
+
+.map-label__dot {
+  width: 9px;
+  height: 9px;
+  margin-bottom: -4.5px;
+  border: 2px solid var(--color-night-900);
+  border-radius: 50%;
+  background: var(--label-accent, var(--color-mint-400));
+}
+
+.me-marker {
+  position: relative;
+  width: 16px;
+  height: 16px;
+  border: 3px solid var(--color-fog-100);
+  border-radius: 50%;
+  background: #4c9bff;
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.4);
+}
+
+.me-marker::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  background: #4c9bff;
+  animation: location-pulse 2s var(--ease-out-quint) infinite;
+}
+
+/* ---------- MapLibre's own controls, restyled to match ---------- */
+
+.maplibregl-map {
+  font-family: var(--font-sans);
+}
+
+.maplibregl-ctrl-attrib.maplibregl-compact,
+.maplibregl-ctrl-attrib {
+  background: rgb(11 15 20 / 0.82) !important;
+  color: var(--color-fog-400);
+  font-size: 11px;
+}
+
+.maplibregl-ctrl-attrib a {
+  color: var(--color-fog-300);
+}
+
+.maplibregl-ctrl-attrib-button {
+  filter: invert(1);
+  opacity: 0.7;
+}
+
+/* People who ask for less motion get none of the decorative loops. */
+@media (prefers-reduced-motion: reduce) {
+  .skeleton,
+  .me-marker::after {
+    animation: none;
+  }
+}

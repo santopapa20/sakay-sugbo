@@ -1,0 +1,28 @@
+# Dependencies and build output (never commit these; they are regenerated)
+node_modules/
+dist/
+target/
+*.tsbuildinfo
+
+# Raw OpenStreetMap downloads kept only to avoid re-downloading
+tools/osm-import/.cache/
+
+# Local settings and secrets
+.env
+.env.*
+!.env.example
+
+# Editors and operating system
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+npm-debug.log*
+
+# Local Claude Code settings
+.claude/

@@ -1,0 +1,68 @@
+{
+  "source": "OpenStreetMap contributors",
+  "licence": "Open Database Licence (ODbL) 1.0",
+  "licenceUrl": "https://www.openstreetmap.org/copyright",
+  "osmDataTimestamp": "2026-11-18T07:36:04Z",
+  "importedAt": "2026-11-18T08:02:22.583Z",
+  "boundingBox": {
+    "south": 10.24,
+    "west": 123.82,
+    "north": 10.4,
+    "east": 123.97
+  },
+  "fieldVerified": false,
+  "note": "Community-mapped data imported without changes to route codes, stops or geometry. Not checked on the ground by this project. Fares and schedules are not included because no verified source was found.",
+  "counts": {
+    "routeDirections": 74,
+    "routeCodes": 37,
+    "places": 1142,
+    "streets": 1892
+  },
+  "skippedRoutes": [
+    {
+      "code": "23D",
+      "relation": 3162038,
+      "reason": "road pieces do not join (gaps of 37, 101 m)"
+    },
+    {
+      "code": "12L",
+      "relation": 3169782,
+      "reason": "old mapping style, both directions mixed in one line"
+    },
+    {
+      "code": "17B",
+      "relation": 3177015,
+      "reason": "old mapping style, both directions mixed in one line"
+    },
+    {
+      "code": "12D",
+      "relation": 3203006,
+      "reason": "road pieces do not join (gaps of 441, 885, 32, 181, 916, 77, 39, 300, 528, 37 m)"
+    },
+    {
+      "code": "12G",
+      "relation": 3203041,
+      "reason": "old mapping style, both directions mixed in one line"
+    },
+    {
+      "code": "12I",
+      "relation": 3203115,
+      "reason": "road pieces do not join (gaps of 37, 304, 784, 113, 205, 204, 769, 116, 33, 301, 1032 m)"
+    },
+    {
+      "code": "17C",
+      "relation": 3203945,
+      "reason": "old mapping style, both directions mixed in one line"
+    },
+    {
+      "code": "17D",
+      "relation": 3204007,
+      "reason": "old mapping style, both directions mixed in one line"
+    },
+    {
+      "code": "22I",
+      "relation": 3207277,
+      "reason": "old mapping style, both directions mixed in one line"
+    }
+  ]
+}
