@@ -1,10 +1,13 @@
 import { ArrowLeft, ExternalLink, Star } from 'lucide-react';
+import { useMemo } from 'react';
 import { IconButton } from '../../components/IconButton';
 import { RouteBadge } from '../../components/RouteBadge';
 import { useAppStore } from '../../store/appStore';
-import type { RouteDirection } from '../../types';
+import type { RouteDirection, RouteStop } from '../../types';
 import { formatDistance } from '../../utils/geo';
-import { destinationLabel, originLabel, viaStreets } from './routeModel';
+import { TRANSFER_RADIUS_M } from '../../config';
+import { ShareButton } from '../share/ShareButton';
+import { destinationLabel, originLabel, routesAtStop, viaStreets } from './routeModel';
 
 /**
  * Everything known about one direction of a route, as text.
@@ -28,14 +31,17 @@ export function RouteDetail({ route }: { route: RouteDirection }) {
           <IconButton label="Back" onClick={() => selectRoute(null)}>
             <ArrowLeft className="size-5" />
           </IconButton>
-          <IconButton
-            label={saved ? `Remove route ${route.code} from saved` : `Save route ${route.code}`}
-            aria-pressed={saved}
-            active={saved}
-            onClick={() => toggleFavouriteRoute(route.code)}
-          >
-            <Star className="size-5" fill={saved ? 'currentColor' : 'none'} />
-          </IconButton>
+          <span className="flex">
+            <ShareButton what={`route ${route.code}`} />
+            <IconButton
+              label={saved ? `Remove route ${route.code} from saved` : `Save route ${route.code}`}
+              aria-pressed={saved}
+              active={saved}
+              onClick={() => toggleFavouriteRoute(route.code)}
+            >
+              <Star className="size-5" fill={saved ? 'currentColor' : 'none'} />
+            </IconButton>
+          </span>
         </div>
         <div className="mt-1 flex items-center gap-3">
           <RouteBadge code={route.code} colour={route.colour} size="lg" />
@@ -136,6 +142,7 @@ export function RouteDetail({ route }: { route: RouteDirection }) {
                   </span>
                   <span className="shrink-0 text-xs tabular-nums text-fog-500">{formatDistance(stop.alongM)}</span>
                 </button>
+                {current && <StopConnections route={route} stop={stop} />}
               </li>
             );
           })}
@@ -156,6 +163,62 @@ export function RouteDetail({ route }: { route: RouteDirection }) {
         </a>
       </footer>
     </article>
+  );
+}
+
+/**
+ * Shown under the selected stop: the other routes you could change to here.
+ * It uses the same 150 m rule as the trip finder, so the two always agree.
+ */
+function StopConnections({ route, stop }: { route: RouteDirection; stop: RouteStop }) {
+  const routes = useAppStore((state) => state.routes);
+  const selectRoute = useAppStore((state) => state.selectRoute);
+  const connections = useMemo(() => {
+    // Some codes have several variants heading to the same place. One row per
+    // code and destination is enough here; the nearest stop wins.
+    const seen = new Set<string>();
+    return routesAtStop(routes, stop, route.code, TRANSFER_RADIUS_M).filter(({ direction }) => {
+      const key = `${direction.code}|${destinationLabel(direction)}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [routes, stop, route.code]);
+
+  return (
+    <div className="relative mb-2 ml-[38px] mt-1 rounded-md border border-night-600 bg-night-800 p-2.5">
+      <p className="eyebrow">
+        {connections.length > 0 ? 'You can change here to' : 'No other mapped route stops here'}
+      </p>
+      {connections.length > 0 ? (
+        <ul className="mt-1.5 flex flex-col">
+          {connections.map(({ direction, stop: theirStop, distanceM }) => (
+            <li key={direction.id}>
+              <button
+                type="button"
+                onClick={() => selectRoute(direction.id)}
+                className="flex w-full items-center gap-2.5 rounded-sm px-1 py-1.5 text-left hover:bg-night-700"
+              >
+                <RouteBadge code={direction.code} colour={direction.colour} size="sm" />
+                <span className="min-w-0 flex-1 truncate text-sm text-fog-100">
+                  toward {destinationLabel(direction)}
+                </span>
+                {/* Under 30 m is the same corner; further than that is worth saying. */}
+                {distanceM >= 30 && (
+                  <span className="shrink-0 text-xs text-fog-500" title={theirStop.name ?? undefined}>
+                    {formatDistance(distanceM)} walk
+                  </span>
+                )}
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="mt-1 text-[13px] text-fog-400">
+          Nothing else in the data stops within {TRANSFER_RADIUS_M} metres.
+        </p>
+      )}
+    </div>
   );
 }
 

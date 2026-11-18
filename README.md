@@ -17,10 +17,14 @@ Tell it where you are and where you are going; it tells you which jeepney code t
 
 | Feature | What you can do |
 |---|---|
-| **3D map of Cebu** | Real streets and real building footprints, tilted and lit. Pan, zoom, rotate, switch between 3D and flat. |
+| **3D map of Cebu** | Real streets and real building footprints, tilted and lit. Pan, zoom, switch between 3D and flat. A scale bar on wide screens. |
+| **Rotate the map** | Turn-left and turn-right buttons (45° a press) with a compass between them: its needle always points north, and pressing it faces the map north again. Also two fingers on a phone, right-drag with a mouse, or Shift + arrow keys. |
 | **Route network** | 37 jeepney codes (74 directions) drawn over the city, coloured by route family. |
 | **What passes here?** | Tap any spot: see every route within 300 m, how far away it is and on which street. |
 | **Route details** | Pick a route: the line draws itself along the streets, the camera frames it, and the panel lists its direction, main streets and every mapped stop. |
+| **Change here** | Pick a stop on a route: see every other route you could change to within 150 m, and open one with a tap. |
+| **Shareable links** | The web address always describes what is on screen (a route, a stop, a trip, a place). Copy it with the link button and whoever opens it sees the same thing. |
+| **Recent trips** | The last five trips that found a ride are kept in your browser, one tap away. "Clear" removes them. |
 | **Find a ride** | Choose a start and a destination (search, tap the map, or use your location). Get a direct ride or a ride with one change, as step-by-step text and on the map. |
 | **Search** | Places, streets, stops and route codes. Works offline from the bundled data; no outside search service. |
 | **Categories** | Show terminals, ports, schools, hospitals, shopping, government offices or landmarks on the map. |
@@ -49,7 +53,7 @@ Other commands (run inside `frontend/`):
 
 | Command | What it does |
 |---|---|
-| `npm test` | Runs the 64 unit tests (distance maths, search, trip finder, favourites, wording). |
+| `npm test` | Runs the 81 unit tests (distance maths, search, trip finder, links, recent trips, favourites, wording). |
 | `npm run dev:api` | Same app, but taking its data and trips from the Spring Boot backend (see below). |
 | `npm run typecheck` | Checks the TypeScript types without building. |
 | `npm run build` | Type-checks, then builds the production site into `frontend/dist/`. |
@@ -92,6 +96,7 @@ sakay-sugbo/
 │       │   ├── search/       search index + the search box
 │       │   ├── trip/         the trip finder + its screen and wording
 │       │   ├── favorites/    saving to the browser + the Saved screen
+│       │   ├── share/        links: turning the screen into an address and back
 │       │   ├── places/       category chips
 │       │   ├── explore/      "what passes here?" screen
 │       │   └── about/        "About the data" dialog
@@ -155,7 +160,11 @@ also there and tested; [backend/README.md](backend/README.md) has the four setup
 
 Checked by running it (18 November 2026):
 
-- Frontend: `npm test`, 64 tests pass. `npm run typecheck` and `npm run build`: no errors.
+- Frontend: `npm test`, 81 tests pass. `npm run typecheck` and `npm run build`: no errors.
+- The newer features (rotate buttons and Shift + arrow keys, scale bar, "change here", links,
+  recent trips) were driven in a headless Edge browser at 320, 412 and 1366 px wide, on the
+  development and production builds, with no console errors. This included copying a link and
+  reading it back from the clipboard, and opening damaged links, which are ignored.
 - Backend: `mvnw test`, 35 tests pass, including 9 that start the whole application, import
   the real data and call every endpoint. Run on both H2 and MySQL 8.4.
 - Backend on MySQL: started twice against a temporary MySQL server. The second start kept

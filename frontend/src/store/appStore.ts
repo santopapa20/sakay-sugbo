@@ -17,6 +17,12 @@ import {
 } from '../features/favorites/favouritesStorage';
 import { groupRoutes } from '../features/routes/routeModel';
 import { buildSearchIndex, type SearchIndex } from '../features/search/searchIndex';
+import {
+  addRecentTrip,
+  loadRecentTrips,
+  saveRecentTrips,
+  type RecentTrip,
+} from '../features/trip/recentTrips';
 import { buildTripNetwork, type TripNetwork, type TripResult } from '../features/trip/tripPlanner';
 import { dataService } from '../services/dataService';
 import { planTrip } from '../services/tripService';
@@ -80,6 +86,8 @@ interface AppState {
   userLocation: (LngLat & { accuracyM: number }) | null;
   locating: boolean;
   favourites: Favourites;
+  /** The last few trips that found a ride, newest first. */
+  recentTrips: RecentTrip[];
   toasts: Toast[];
 
   // ---- actions
@@ -89,10 +97,15 @@ interface AppState {
   selectRoute: (id: string | null) => void;
   selectStop: (id: string | null) => void;
   focusPlace: (place: Place) => void;
+  /** Looks at a bare spot on the map: "what passes here?". */
+  focusPoint: (point: LngLat) => void;
   clearFocus: () => void;
   setCategory: (category: PlaceCategory | null) => void;
   setAboutOpen: (open: boolean) => void;
   setTripPoint: (end: TripEnd, point: TripPoint | null) => void;
+  /** Sets both ends of a trip at once (a recent trip, or one opened from a link). */
+  setTrip: (origin: TripPoint | null, destination: TripPoint | null) => void;
+  clearRecentTrips: () => void;
   swapTrip: () => void;
   selectTripOption: (index: number) => void;
   setPicking: (end: TripEnd | null) => void;
@@ -128,6 +141,12 @@ export const useAppStore = create<AppState>((set, get) => {
       const result = await planTrip(tripOrigin, tripDestination, { network: tripNetwork, routeById });
       if (request !== tripRequest) return; // the user has already changed the question
       set({ tripStatus: 'done', tripResult: result, tripSelected: 0, sheet: 'half' });
+      // A trip that worked is worth remembering for next time.
+      if (result.options.length > 0) {
+        const recentTrips = addRecentTrip(get().recentTrips, { origin: tripOrigin, destination: tripDestination });
+        set({ recentTrips });
+        saveRecentTrips(storage, recentTrips); // if the browser refuses, the list simply lasts until reload
+      }
     } catch {
       if (request !== tripRequest) return;
       // Only possible when the trip is worked out by the backend and it cannot be reached.
@@ -172,6 +191,7 @@ export const useAppStore = create<AppState>((set, get) => {
     userLocation: null,
     locating: false,
     favourites: loadFavourites(storage),
+    recentTrips: loadRecentTrips(storage),
     toasts: [],
 
     loadData: async () => {
@@ -214,6 +234,14 @@ export const useAppStore = create<AppState>((set, get) => {
         selectedStopId: null,
         sheet: 'half',
       }),
+    focusPoint: (point) =>
+      set({
+        focus: { kind: 'point', point },
+        tab: 'explore',
+        selectedRouteId: null,
+        selectedStopId: null,
+        sheet: 'half',
+      }),
     clearFocus: () => set({ focus: null }),
 
     setCategory: (category) => set({ activeCategory: category }),
@@ -223,6 +251,24 @@ export const useAppStore = create<AppState>((set, get) => {
       set(end === 'origin' ? { tripOrigin: point } : { tripDestination: point });
       set({ tab: 'trip', selectedRouteId: null, selectedStopId: null, picking: null, sheet: 'half' });
       void refreshTrip();
+    },
+
+    setTrip: (origin, destination) => {
+      set({
+        tripOrigin: origin,
+        tripDestination: destination,
+        tab: 'trip',
+        selectedRouteId: null,
+        selectedStopId: null,
+        picking: null,
+        sheet: 'half',
+      });
+      void refreshTrip();
+    },
+
+    clearRecentTrips: () => {
+      set({ recentTrips: [] });
+      saveRecentTrips(storage, []);
     },
 
     swapTrip: () => {

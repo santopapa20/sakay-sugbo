@@ -6,6 +6,7 @@ import {
   flagAmbiguousTerminals,
   groupRoutes,
   originLabel,
+  routesAtStop,
   routesNear,
   streetAt,
   viaStreets,
@@ -139,5 +140,40 @@ describe('routesNear', () => {
   it('sorts nearest first', () => {
     const both = routesNear(routes, { lng: 123.895, lat: 10.33 }, 5000);
     expect(both.map((f) => f.direction.id)).toEqual(['far', 'close']);
+  });
+});
+
+describe('routesAtStop', () => {
+  // Three routes with a stop at (or near) the same corner, and one far away.
+  const here = { id: 'corner', name: 'Corner', lng: 123.9, lat: 10.3, alongM: 500 };
+  const current = route({ id: 'cur', code: '01A', stops: [here] });
+  const sameStop = route({ id: 'same', code: '02B', stops: [{ ...here, alongM: 120 }] });
+  const acrossTheStreet = route({
+    id: 'across',
+    code: '03C',
+    stops: [{ id: 'other', name: 'Corner (other side)', lng: 123.9003, lat: 10.3, alongM: 40 }],
+  });
+  const otherDirection = route({ id: 'cur-back', code: '01A', stops: [here] });
+  const farAway = route({
+    id: 'far',
+    code: '04D',
+    stops: [{ id: 'far-stop', name: 'Far', lng: 123.92, lat: 10.3, alongM: 0 }],
+  });
+  const all = [current, sameStop, acrossTheStreet, otherDirection, farAway];
+
+  it('lists other codes with a stop here or within the transfer distance', () => {
+    const found = routesAtStop(all, here, '01A', 150);
+    expect(found.map((f) => f.direction.code)).toEqual(['02B', '03C']);
+    expect(found[0]!.distanceM).toBe(0);
+    expect(found[1]!.distanceM).toBeGreaterThan(25);
+    expect(found[1]!.stop.name).toBe('Corner (other side)');
+  });
+
+  it('leaves out the route being looked at, in both directions', () => {
+    expect(routesAtStop(all, here, '01A', 150).some((f) => f.direction.code === '01A')).toBe(false);
+  });
+
+  it('respects the distance limit', () => {
+    expect(routesAtStop(all, here, '01A', 10).map((f) => f.direction.code)).toEqual(['02B']);
   });
 });

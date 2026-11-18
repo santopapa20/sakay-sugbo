@@ -80,6 +80,15 @@ export function zoomBy(map: MapLibreMap, delta: number) {
   map.easeTo({ zoom: map.getZoom() + delta, duration: duration(250) });
 }
 
+/**
+ * Turns the map by `degrees`. A positive number turns the picture
+ * anticlockwise (the map's "bearing", the compass direction at the top of the
+ * screen, goes up).
+ */
+export function rotateBy(map: MapLibreMap, degrees: number) {
+  map.easeTo({ bearing: map.getBearing() + degrees, duration: duration(350) });
+}
+
 export function resetNorth(map: MapLibreMap) {
   map.easeTo({ bearing: 0, duration: duration(500) });
 }

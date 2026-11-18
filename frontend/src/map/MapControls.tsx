@@ -1,11 +1,14 @@
-import { Box, Home, LoaderCircle, LocateFixed, Minus, Navigation2, Plus } from 'lucide-react';
+import { Box, Home, LoaderCircle, LocateFixed, Minus, Navigation2, Plus, RotateCcw, RotateCw } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
 import { IconButton } from '../components/IconButton';
 import { useAppStore } from '../store/appStore';
-import { flyToPoint, goHome, resetNorth, setTilted, zoomBy } from './camera';
+import { flyToPoint, goHome, resetNorth, rotateBy, setTilted, zoomBy } from './camera';
 
-/** The column of round-the-map buttons: locate, zoom, compass, 3D, home. */
+/** How far one press of a rotate button turns the map: an eighth of a full turn. */
+const ROTATE_STEP_DEGREES = 45;
+
+/** The buttons at the edge of the map: locate, zoom, 3D, home, and rotation. */
 export function MapControls({ map }: { map: MapLibreMap }) {
   const locating = useAppStore((state) => state.locating);
   const locateUser = useAppStore((state) => state.locateUser);
@@ -31,8 +34,10 @@ export function MapControls({ map }: { map: MapLibreMap }) {
     if (here) flyToPoint(map, here);
   };
 
+  const facingNorth = Math.abs(bearing) < 0.5;
+
   return (
-    <div className="absolute right-3 top-[132px] z-10 flex flex-col gap-2 lg:bottom-10 lg:right-4 lg:top-auto">
+    <div className="absolute right-3 top-[132px] z-10 flex flex-col items-end gap-2 lg:bottom-10 lg:right-4 lg:top-auto">
       <IconButton
         variant="solid"
         label={locating ? 'Finding your location' : 'Show my location'}
@@ -54,12 +59,6 @@ export function MapControls({ map }: { map: MapLibreMap }) {
         </IconButton>
       </div>
 
-      <IconButton variant="solid" label="Point the map north" onClick={() => resetNorth(map)}>
-        <Navigation2
-          className="size-5 transition-transform duration-150"
-          style={{ transform: `rotate(${-bearing}deg)` }}
-        />
-      </IconButton>
       <IconButton
         variant="solid"
         label={tilted ? 'Switch to flat view' : 'Switch to 3D view'}
@@ -72,6 +71,36 @@ export function MapControls({ map }: { map: MapLibreMap }) {
       <IconButton variant="solid" label="Back to the starting view" onClick={() => goHome(map)}>
         <Home className="size-5" />
       </IconButton>
+
+      {/* Rotation: turn left, compass (press to face north again), turn right.
+          Laid out sideways so it adds no height on a phone. */}
+      <div role="group" aria-label="Rotate the map" className="panel flex overflow-hidden">
+        <IconButton
+          label="Rotate the map left"
+          onClick={() => rotateBy(map, ROTATE_STEP_DEGREES)}
+          className="rounded-none"
+        >
+          <RotateCcw className="size-5" />
+        </IconButton>
+        <div className="w-px bg-night-600" />
+        <IconButton
+          label={facingNorth ? 'The map is facing north' : 'Point the map north'}
+          active={!facingNorth}
+          onClick={() => resetNorth(map)}
+          className="rounded-none"
+        >
+          {/* The needle always points to north, like a real compass. */}
+          <Navigation2 className="size-5" style={{ transform: `rotate(${-bearing}deg)` }} />
+        </IconButton>
+        <div className="w-px bg-night-600" />
+        <IconButton
+          label="Rotate the map right"
+          onClick={() => rotateBy(map, -ROTATE_STEP_DEGREES)}
+          className="rounded-none"
+        >
+          <RotateCw className="size-5" />
+        </IconButton>
+      </div>
     </div>
   );
 }

@@ -6,7 +6,7 @@
  * React does not draw the map itself. MapLibre does, on a WebGL canvas, so
  * each `useEffect` below is a small translation from state to map commands.
  */
-import { AttributionControl, Map as MapLibreMap, Marker, setWorkerUrl } from 'maplibre-gl';
+import { AttributionControl, Map as MapLibreMap, Marker, ScaleControl, setWorkerUrl } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 // MapLibre does its heavy work in a background "worker" script. Vite needs to
 // be told to bundle it, and MapLibre needs to be told where it ended up.
@@ -90,6 +90,8 @@ export default function MapView() {
     if (import.meta.env.DEV) (window as unknown as { __map?: MapLibreMap }).__map = instance;
 
     instance.addControl(new AttributionControl({ compact: true }), 'bottom-right');
+    // A scale bar, to judge walking distances by eye. Shown on wide screens only (see index.css).
+    instance.addControl(new ScaleControl({ unit: 'metric', maxWidth: 120 }), 'bottom-left');
     instance.setPadding(cameraPadding());
     let loaded = false;
 

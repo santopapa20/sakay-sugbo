@@ -10,6 +10,7 @@ import type { RouteDirection, TripPoint } from '../../types';
 import { formatDistance } from '../../utils/geo';
 import { destinationLabel, routesNear, streetAt, type NearbyRoute } from '../routes/routeModel';
 import { categoryLabel } from '../search/searchIndex';
+import { ShareButton } from '../share/ShareButton';
 
 /** The Explore tab: an invitation to tap the map, or the answer to "what passes here?". */
 export function ExplorePanel() {
@@ -120,6 +121,7 @@ function PointPanel({ focus }: { focus: NonNullable<Focus> }) {
             <Star className="size-5" fill={saved ? 'currentColor' : 'none'} />
           </IconButton>
         )}
+        <ShareButton what={place ? place.name : 'this spot'} />
         <IconButton label="Close" onClick={clearFocus}>
           <X className="size-5" />
         </IconButton>

@@ -221,18 +221,48 @@
   font-family: var(--font-sans);
 }
 
-.maplibregl-ctrl-attrib.maplibregl-compact,
-.maplibregl-ctrl-attrib {
-  background: rgb(11 15 20 / 0.82) !important;
-  color: var(--color-fog-400);
+/* The map credit. MapLibre's own stylesheet loads after this one and paints
+   the text black, so these rules start with .maplibregl-map to outrank it.
+   The credit must stay readable: showing it is a condition of using the data. */
+.maplibregl-map .maplibregl-ctrl-attrib,
+.maplibregl-map .maplibregl-ctrl-attrib.maplibregl-compact {
+  background: rgb(11 15 20 / 0.9);
+  color: var(--color-fog-300);
   font-size: 11px;
 }
 
-.maplibregl-ctrl-attrib a {
+.maplibregl-map .maplibregl-ctrl-attrib-inner {
   color: var(--color-fog-300);
 }
 
-.maplibregl-ctrl-attrib-button {
+/* The scale bar. On a phone the bottom sheet covers that corner, so it is hidden there. */
+.maplibregl-map .maplibregl-ctrl-bottom-left {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .maplibregl-map .maplibregl-ctrl-bottom-left {
+    display: block;
+    bottom: 10px;
+    left: 424px; /* clear of the side panel */
+  }
+}
+
+.maplibregl-map .maplibregl-ctrl-scale {
+  border: 1px solid var(--color-fog-400);
+  border-top: 0;
+  background: rgb(11 15 20 / 0.82);
+  color: var(--color-fog-300);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.maplibregl-map .maplibregl-ctrl-attrib a {
+  color: var(--color-fog-100);
+}
+
+.maplibregl-map .maplibregl-ctrl-attrib-button {
   filter: invert(1);
   opacity: 0.7;
 }

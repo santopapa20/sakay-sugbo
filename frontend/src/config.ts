@@ -29,3 +29,6 @@ export const TRANSFER_RADIUS_M = 150;
 
 /** Key used to remember favourites in the browser's local storage. */
 export const FAVOURITES_STORAGE_KEY = 'sakay-sugbo:favourites:v1';
+
+/** Key used to remember recent trips in the browser's local storage. */
+export const RECENT_TRIPS_STORAGE_KEY = 'sakay-sugbo:recent-trips:v1';

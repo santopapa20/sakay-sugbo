@@ -8,6 +8,7 @@ import { BottomNav, TabBar } from './components/Navigation';
 import { Toasts } from './components/Toasts';
 import { CategoryFilter } from './features/places/CategoryFilter';
 import { GlobalSearch } from './features/search/GlobalSearch';
+import { useUrlSync } from './features/share/useUrlSync';
 import { useMediaQuery } from './hooks/useMediaQuery';
 import { DESKTOP_QUERY } from './map/camera';
 import { PanelContent } from './PanelContent';
@@ -26,6 +27,9 @@ export default function App() {
   useEffect(() => {
     void loadData();
   }, [loadData]);
+
+  // Opens whatever a shared link points at, and keeps the address up to date.
+  useUrlSync();
 
   return (
     // reducedMotion="user" switches off movement for people who have asked their device for less of it.

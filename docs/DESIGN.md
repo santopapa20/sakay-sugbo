@@ -68,8 +68,8 @@ blur, so text never competes with the map. One shadow.
 
 `RouteBadge` (the signboard), `Button`, `IconButton`, `PlaceCombobox` (search with
 suggestions), `CategoryFilter`, `TabBar` / `BottomNav`, `BottomSheet`, `Modal`, `Toasts`,
-`SkeletonList` (loading), `EmptyState`, `ErrorState`, `MapControls`, and floating map
-labels. Each lives in `frontend/src/components/` or beside the feature that owns it.
+`SkeletonList` (loading), `EmptyState`, `ErrorState`, `MapControls` (with the rotation
+group), `ShareButton`, and floating map labels. Each lives in `frontend/src/components/` or beside the feature that owns it.
 
 Every interactive component has hover, keyboard-focus, pressed and disabled states. Lists
 have loading, empty and error states.
@@ -106,6 +106,26 @@ instead of gliding, and both loops stop.
 | Long direction names caused sideways scrolling in the panel | Fixed the shrinking rule on the direction list |
 | The trip finder chose a transfer point on a flyover | Boarding, alighting and changing now happen only at mapped stops |
 | Two directions of one code had identical labels | Labelled by first and last stop when the recorded terminals clash |
+
+### Second pass, after adding rotation, links, "change here" and recent trips
+
+| Seen in the running app | Fix |
+|---|---|
+| The map credit ("© OpenStreetMap") was black on the dark map, close to invisible. MapLibre's stylesheet loads later and was winning | Stronger selectors; now light text on a 90% dark background. Measured in the browser |
+| Rotate buttons stacked vertically would have slid under the bottom sheet on a phone | One sideways group: left, compass, right. It adds no height and fits at 320 px |
+| "Change here" listed the same code and destination twice for routes with variants | One row per code and destination |
+| Links showed `%2C` instead of commas | Commas left readable; links are shorter |
+
+Design choices in this pass:
+
+- **The compass needle points north**, like a real one, and turns mint when the map is not
+  facing north, so there is a visible reason to press it.
+- **A link never says "my location".** If a trip started from your location, the copied link
+  carries that spot as an ordinary pin, and the confirmation message says so before you share it.
+- **Recent trips skip "my location" trips** entirely: the spot is stale by next time, and it
+  should not sit in the browser's storage.
+- **The address changes without adding history entries**, so Back still leaves the app in
+  one press.
 
 Still open: a selected place shows its name twice when its category is also switched on;
 floating labels can be clipped at the screen edge on narrow phones.

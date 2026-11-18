@@ -1,4 +1,4 @@
-import { ArrowUpDown, ChevronRight, Footprints, LocateFixed, MapPinned, Route } from 'lucide-react';
+import { ArrowUpDown, ChevronRight, Footprints, History, LocateFixed, MapPinned, Route } from 'lucide-react';
 import { Fragment } from 'react';
 import { Button } from '../../components/Button';
 import { EmptyState } from '../../components/EmptyState';
@@ -8,6 +8,7 @@ import { useAppStore, type TripEnd } from '../../store/appStore';
 import type { TripPoint } from '../../types';
 import { PlaceCombobox } from '../search/PlaceCombobox';
 import type { SearchResult } from '../search/searchIndex';
+import { ShareButton } from '../share/ShareButton';
 import type { RideLeg, TripOption } from './tripPlanner';
 import { describeTrip, explainNoTrip, summariseTrip } from './tripText';
 
@@ -23,14 +24,20 @@ export function TripPanel() {
   const setPicking = useAppStore((state) => state.setPicking);
   const selectTripOption = useAppStore((state) => state.selectTripOption);
   const selectRoute = useAppStore((state) => state.selectRoute);
+  const recentTrips = useAppStore((state) => state.recentTrips);
+  const setTrip = useAppStore((state) => state.setTrip);
+  const clearRecentTrips = useAppStore((state) => state.clearRecentTrips);
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <p className="eyebrow">Find a ride</p>
-        <h2 className="mt-1 font-display text-[28px] font-semibold leading-tight tracking-wide">
-          Where are you going?
-        </h2>
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <p className="eyebrow">Find a ride</p>
+          <h2 className="mt-1 font-display text-[28px] font-semibold leading-tight tracking-wide">
+            Where are you going?
+          </h2>
+        </div>
+        {origin && destination && <ShareButton what="this trip" className="-mr-2" />}
       </div>
 
       <div className="flex items-stretch gap-1">
@@ -69,6 +76,40 @@ export function TripPanel() {
           Type a place, use your location, or tap the map to choose{' '}
           {!origin ? 'where you start' : 'where you want to go'}.
         </p>
+      )}
+
+      {!origin && !destination && !picking && recentTrips.length > 0 && (
+        <section aria-labelledby="recent-heading">
+          <div className="mb-1 flex items-center justify-between">
+            <h3 id="recent-heading" className="eyebrow">
+              Recent trips
+            </h3>
+            <button
+              type="button"
+              onClick={clearRecentTrips}
+              className="h-9 rounded-sm px-2 text-[13px] font-semibold text-fog-400 hover:text-fog-100"
+            >
+              Clear
+            </button>
+          </div>
+          <ul className="flex flex-col gap-2">
+            {recentTrips.map((trip) => (
+              <li key={`${trip.origin.lat},${trip.origin.lng}>${trip.destination.lat},${trip.destination.lng}`}>
+                <button
+                  type="button"
+                  onClick={() => setTrip(trip.origin, trip.destination)}
+                  className="flex w-full items-center gap-3 rounded-md border border-night-600 px-3 py-2.5 text-left transition-colors hover:border-night-500"
+                >
+                  <History className="size-5 shrink-0 text-fog-500" aria-hidden="true" />
+                  <span className="min-w-0">
+                    <span className="block truncate text-[15px] font-medium text-fog-100">{trip.origin.label}</span>
+                    <span className="block truncate text-[13px] text-fog-400">to {trip.destination.label}</span>
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
 
       {status === 'searching' && (

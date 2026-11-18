@@ -2,8 +2,8 @@
  * Questions we ask about routes: where does it start, which streets does it
  * use, which routes pass near this point? Pure functions, no React, no map.
  */
-import type { LngLat, RouteDirection, RouteGroup } from '../../types';
-import { indexAtDistance, nearestOnLine } from '../../utils/geo';
+import type { LngLat, RouteDirection, RouteGroup, RouteStop } from '../../types';
+import { haversineMetres, indexAtDistance, nearestOnLine } from '../../utils/geo';
 
 /**
  * Where this direction starts, using the best information OpenStreetMap has.
@@ -120,4 +120,41 @@ export function routesNear(
     }
   }
   return found.sort((a, b) => a.distanceM - b.distanceM);
+}
+
+/** Another route that can be boarded at, or close to, a given stop. */
+export interface StopConnection {
+  direction: RouteDirection;
+  /** That route's own stop here (it may be across the street). */
+  stop: RouteStop;
+  /** Metres between the two stops; 0 when it is the very same stop. */
+  distanceM: number;
+}
+
+/**
+ * The other routes you could change to at a stop: every direction of a
+ * different code that has a stop within `radiusM` metres. Sorted by code.
+ * The trip finder uses the same distance to decide where a change is possible.
+ */
+export function routesAtStop(
+  directions: RouteDirection[],
+  stop: RouteStop,
+  exceptCode: string,
+  radiusM: number,
+): StopConnection[] {
+  const found: StopConnection[] = [];
+  for (const direction of directions) {
+    if (direction.code === exceptCode) continue;
+    let best: StopConnection | null = null;
+    for (const candidate of direction.stops) {
+      const distanceM = candidate.id === stop.id ? 0 : haversineMetres(stop, candidate);
+      if (distanceM <= radiusM && (!best || distanceM < best.distanceM)) {
+        best = { direction, stop: candidate, distanceM };
+      }
+    }
+    if (best) found.push(best);
+  }
+  return found.sort(
+    (a, b) => a.direction.code.localeCompare(b.direction.code) || a.distanceM - b.distanceM,
+  );
 }
