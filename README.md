@@ -196,8 +196,15 @@ Checked by running it (18 November 2026):
   the "About the data" dialog opens and closes with Escape; the phone layout (470 px wide)
   and a desktop layout (1366 px wide) both render without sideways scrolling.
 
+- Ready for GitHub (19 November 2026): a fresh clone of the repository was installed with
+  `npm ci`, type-checked, tested and built, and the backend tests were run from it, which
+  are the same steps the workflow runs. The built site was then served from a sub-folder
+  address, as GitHub Pages does, and loaded with no failed requests.
+
 Not checked:
 
+- **The workflow on GitHub itself.** It can only run once the repository is pushed. The file
+  is valid and its steps pass on this machine, but the first real run is the real test.
 - **The routes themselves.** They are as mapped in OpenStreetMap; none was ridden.
 - **A permanent MySQL server.** MySQL was tested on a temporary server that was then
   deleted. The lasting one needs a root password, which only the owner should choose.
