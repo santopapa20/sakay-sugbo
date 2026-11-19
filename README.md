@@ -201,10 +201,13 @@ Checked by running it (18 November 2026):
   are the same steps the workflow runs. The built site was then served from a sub-folder
   address, as GitHub Pages does, and loaded with no failed requests.
 
+- Live on GitHub Pages (19 November 2026): the workflow ran on GitHub, with the frontend and
+  backend jobs passing and the site published. The live address was then loaded in a
+  headless browser: the map, a route with its stops, and a shared link all worked, with no
+  console errors.
+
 Not checked:
 
-- **The workflow on GitHub itself.** It can only run once the repository is pushed. The file
-  is valid and its steps pass on this machine, but the first real run is the real test.
 - **The routes themselves.** They are as mapped in OpenStreetMap; none was ridden.
 - **A permanent MySQL server.** MySQL was tested on a temporary server that was then
   deleted. The lasting one needs a root password, which only the owner should choose.
