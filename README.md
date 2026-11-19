@@ -1,10 +1,24 @@
 # Sakay Sugbo
 
+[![Test and deploy](https://github.com/santopapa20/sakay-sugbo/actions/workflows/ci.yml/badge.svg)](https://github.com/santopapa20/sakay-sugbo/actions/workflows/ci.yml)
+
 **A Cebu jeepney route finder on a 3D map of the city.**
 Tell it where you are and where you are going; it tells you which jeepney code to ride
 (04L, 13C, 01K ...), where to board, and where to change.
 
 *Sakay* is Cebuano for "ride"; *Sugbo* is the Cebuano name for Cebu.
+
+**Live demo:** <https://santopapa20.github.io/sakay-sugbo/>
+
+![Route 13C drawn across Cebu City, with its direction, streets and stops listed in the side panel](docs/screenshots/desktop-route.jpg)
+
+![A trip from SM City Cebu to USC Talamban: ride 03Q, change to 13C, with step-by-step directions](docs/screenshots/desktop-trip.jpg)
+
+<p>
+  <img src="docs/screenshots/phone-home.jpg" width="270" alt="The phone layout: a 3D map of downtown Cebu with jeepney routes, search on top and a sheet at the bottom">
+  &nbsp;
+  <img src="docs/screenshots/phone-nearby.jpg" width="270" alt="After tapping the map on a phone: the jeepney routes that pass within 300 metres">
+</p>
 
 > **About the data.** Every route, stop and place comes from
 > [OpenStreetMap](https://www.openstreetmap.org/copyright), a map made by volunteers.
@@ -198,7 +212,24 @@ Not checked:
 - Fares and travel times (waiting for a verified source).
 - Nine route codes that are mapped too roughly in OpenStreetMap to use (listed in
   [docs/DATA.md](docs/DATA.md)), and routes whose codes have no letter (for example 52, 60).
-- Deployment.
+- Hosting the backend. The online version runs without it.
+
+## Putting it online
+
+The frontend is a static site, so [GitHub Pages](https://pages.github.com) hosts it for free.
+The workflow in [`.github/workflows/ci.yml`](.github/workflows/ci.yml) does the work: on every
+push to `main` it runs the frontend and backend tests and, if they pass, publishes the site.
+
+One-time setup:
+
+1. Create an empty public repository on GitHub and push this project to it.
+2. On GitHub, open **Settings → Pages** and set **Source** to **GitHub Actions**.
+3. Push again, or re-run the workflow from the **Actions** tab. The address appears on the
+   workflow's page when it finishes.
+
+The online version runs in static mode: the routes and the trip finder are in the browser, and
+the Spring Boot backend is not hosted anywhere. The site is built with relative addresses
+(`base: './'` in `vite.config.ts`), so it works under any repository name.
 
 ## Credits and licences
 

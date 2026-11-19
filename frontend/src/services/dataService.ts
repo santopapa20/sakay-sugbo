@@ -26,6 +26,13 @@ export interface TransitDataService {
 /** True when the app should talk to the Spring Boot backend. */
 export const USE_API = import.meta.env.VITE_DATA_SOURCE === 'api';
 
+/**
+ * Where the bundled data files live. BASE_URL is the folder the app is served
+ * from ("/" on your own computer, "./" in a built site), so this also works
+ * when the site sits in a sub-folder, as it does on GitHub Pages.
+ */
+const DATA_URL = `${import.meta.env.BASE_URL}data/`;
+
 export async function getJson<T>(url: string): Promise<T> {
   const response = await fetch(url);
   if (!response.ok) {
@@ -50,7 +57,7 @@ function prepareRoutes(routes: RawRoute[]): RouteDirection[] {
 class StaticFileDataService implements TransitDataService {
   async getRoutes(): Promise<RouteDirection[]> {
     const collection = await getJson<FeatureCollection<LineString, RouteProperties>>(
-      '/data/routes.geojson',
+      `${DATA_URL}routes.geojson`,
     );
     return prepareRoutes(
       collection.features.map((feature) => ({
@@ -62,7 +69,7 @@ class StaticFileDataService implements TransitDataService {
 
   async getPlaces(): Promise<Place[]> {
     const collection = await getJson<FeatureCollection<Point, PlaceProperties>>(
-      '/data/places.geojson',
+      `${DATA_URL}places.geojson`,
     );
     return collection.features.map((feature) => ({
       ...feature.properties,
@@ -72,7 +79,7 @@ class StaticFileDataService implements TransitDataService {
   }
 
   getMeta(): Promise<DataMeta> {
-    return getJson<DataMeta>('/data/meta.json');
+    return getJson<DataMeta>(`${DATA_URL}meta.json`);
   }
 }
 

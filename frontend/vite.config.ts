@@ -5,6 +5,10 @@ import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  // "./" makes every address in the built site relative to index.html, so the
+  // same build works at the root of a domain and inside a sub-folder such as
+  // https://<user>.github.io/sakay-sugbo/ on GitHub Pages.
+  base: './',
   server: {
     port: 5173,
     // When the Spring Boot backend exists, requests to /api are passed to it.

@@ -1,3 +1,6 @@
 # Keep line endings consistent on every operating system.
 * text=auto eol=lf
 *.geojson text eol=lf
+# Windows command scripts need Windows line endings to run reliably.
+*.cmd text eol=crlf
+*.bat text eol=crlf
